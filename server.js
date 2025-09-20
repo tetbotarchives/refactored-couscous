@@ -5,6 +5,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const path = require('path');
 const fs = require('fs');
+require('./index.js'); 
 
 const app = express();
 const server = http.createServer(app);
