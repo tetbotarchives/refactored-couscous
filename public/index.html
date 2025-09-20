@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight Bot - WhatsApp Bot Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        .log-entry {
+            transition: all 0.3s ease;
+        }
+        .log-entry.new {
+            background-color: #fef3c7;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-connected {
+            background-color: #10b981;
+            animation: pulse 2s infinite;
+        }
+        .status-disconnected {
+            background-color: #ef4444;
+        }
+        .status-connecting {
+            background-color: #f59e0b;
+            animation: pulse 1s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .card {
+            background: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <div class="container mx-auto px-4 py-8">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">🤖 Knight Bot Dashboard</h1>
+            <p class="text-gray-600">WhatsApp Bot Management Interface</p>
+        </div>
+
+        <!-- Status Cards -->
+        <div class="grid md:grid-cols-4 gap-6 mb-8">
+            <div class="card p-6">
+                <div class="flex items-center">
+                    <span id="statusDot" class="status-dot status-connecting"></span>
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-700">Status</h3>
+                        <p id="botStatus" class="text-gray-600">Starting...</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Messages</h3>
+                <p id="messagesCount" class="text-2xl font-bold text-blue-600">0</p>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Groups</h3>
+                <p id="groupsCount" class="text-2xl font-bold text-green-600">0</p>
+            </div>
+            <div class="card p-6">
+                <h3 class="text-lg font-semibold text-gray-700">Uptime</h3>
+                <p id="uptime" class="text-2xl font-bold text-purple-600">00:00:00</p>
+            </div>
+        </div>
+
+        <!-- Bot Information -->
+        <div class="grid md:grid-cols-2 gap-6 mb-8">
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Bot Information</h2>
+                <div class="space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Start Time:</span>
+                        <span id="startTime" class="font-medium">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Last Activity:</span>
+                        <span id="lastActivity" class="font-medium">-</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Version:</span>
+                        <span class="font-medium">2.1.9</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Environment:</span>
+                        <span id="environment" class="font-medium">Production</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Actions</h2>
+                <div class="space-y-3">
+                    <button onclick="restartBot()" class="w-full bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition">
+                        🔄 Restart Bot
+                    </button>
+                    <button onclick="clearLogs()" class="w-full bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600 transition">
+                        🗑️ Clear Logs
+                    </button>
+                    <button onclick="exportLogs()" class="w-full bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600 transition">
+                        📥 Export Logs
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Logs Section -->
+        <div class="card p-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Real-time Logs</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="flex items-center">
+                        <input type="checkbox" id="autoScroll" checked class="mr-2">
+                        Auto-scroll
+                    </label>
+                    <label class="flex items-center">
+                        <select id="logLevel" class="border rounded px-2 py-1">
+                            <option value="all">All Levels</option>
+                            <option value="error">Errors Only</option>
+                            <option value="warn">Warnings+</option>
+                            <option value="info">Info+</option>
+                        </select>
+                    </label>
+                </div>
+            </div>
+            <div id="logsContainer" class="bg-gray-900 text-green-400 p-4 rounded h-96 overflow-y-auto font-mono text-sm">
+                <div class="text-center text-gray-500">Connecting to log stream...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io();
+        let logs = [];
+        let botState = {};
+
+        // Socket event handlers
+        socket.on('connect', () => {
+            console.log('Connected to server');
+            updateConnectionStatus(true);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+            updateConnectionStatus(false);
+        });
+
+        socket.on('botState', (state) => {
+            botState = state;
+            updateUI(state);
+        });
+
+        socket.on('newLog', (logEntry) => {
+            addLogToUI(logEntry);
+        });
+
+        // UI Update functions
+        function updateUI(state) {
+            document.getElementById('botStatus').textContent = state.status;
+            document.getElementById('messagesCount').textContent = state.messagesProcessed;
+            document.getElementById('groupsCount').textContent = state.groupsConnected;
+            document.getElementById('startTime').textContent = new Date(state.startTime).toLocaleString();
+            document.getElementById('lastActivity').textContent = new Date(state.lastActivity).toLocaleString();
+            
+            // Update status dot
+            const statusDot = document.getElementById('statusDot');
+            statusDot.className = 'status-dot ' + (state.connected ? 'status-connected' : 'status-connecting');
+            
+            // Update logs
+            logs = state.logs || [];
+            renderLogs();
+        }
+
+        function updateConnectionStatus(connected) {
+            const statusDot = document.getElementById('statusDot');
+            if (connected) {
+                statusDot.className = 'status-dot status-connected';
+            } else {
+                statusDot.className = 'status-dot status-disconnected';
+            }
+        }
+
+        function addLogToUI(logEntry) {
+            logs.unshift(logEntry);
+            if (logs.length > 100) {
+                logs = logs.slice(0, 100);
+            }
+            renderLogs();
+            
+            // Auto-scroll if enabled
+            if (document.getElementById('autoScroll').checked) {
+                const container = document.getElementById('logsContainer');
+                container.scrollTop = 0;
+            }
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('logsContainer');
+            const logLevel = document.getElementById('logLevel').value;
+            
+            let filteredLogs = logs;
+            if (logLevel !== 'all') {
+                const levelOrder = { error: 0, warn: 1, info: 2 };
+                const minLevel = levelOrder[logLevel];
+                filteredLogs = logs.filter(log => levelOrder[log.level] <= minLevel);
+            }
+            
+            container.innerHTML = filteredLogs.map(log => {
+                const time = new Date(log.timestamp).toLocaleTimeString();
+                const levelColor = {
+                    error: 'text-red-400',
+                    warn: 'text-yellow-400',
+                    info: 'text-green-400'
+                }[log.level] || 'text-gray-400';
+                
+                return `<div class="log-entry mb-1">
+                    <span class="text-gray-500">[${time}]</span>
+                    <span class="${levelColor}">[${log.level.toUpperCase()}]</span>
+                    <span class="text-white">${escapeHtml(log.message)}</span>
+                </div>`;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // Action functions
+        function restartBot() {
+            if (confirm('Are you sure you want to restart the bot?')) {
+                fetch('/api/bot/restart', { method: 'POST' })
+                    .then(response => response.json())
+                    .then(data => alert(data.message))
+                    .catch(error => alert('Error: ' + error));
+            }
+        }
+
+        function clearLogs() {
+            if (confirm('Clear all logs?')) {
+                logs = [];
+                renderLogs();
+            }
+        }
+
+        function exportLogs() {
+            const logText = logs.map(log => 
+                `[${new Date(log.timestamp).toISOString()}] [${log.level.toUpperCase()}] ${log.message}`
+            ).join('\n');
+            
+            const blob = new Blob([logText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `knight-bot-logs-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Update uptime every second
+        setInterval(() => {
+            if (botState.startTime) {
+                const uptime = Date.now() - new Date(botState.startTime).getTime();
+                const hours = Math.floor(uptime / 3600000);
+                const minutes = Math.floor((uptime % 3600000) / 60000);
+                const seconds = Math.floor((uptime % 60000) / 1000);
+                document.getElementById('uptime').textContent = 
+                    `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            }
+        }, 1000);
+
+        // Log level filter
+        document.getElementById('logLevel').addEventListener('change', renderLogs);
+    </script>
+</body>
+</html>
