@@ -56,7 +56,7 @@ This is a WhatsApp bot built using the Baileys library for group management, inc
 Click the button below to fork the Knight Bot repository to your GitHub account:
 
 <div align="center">
-  <a href="https://github.com/mruniquehacker/Knightbot-MD/fork">
+  <a href="[https://github.com/mruniquehacker/Knightbot-MD/fork](https://github.com/cortexinvader/refactored-couscous/fork)">
     <img src="https://img.shields.io/badge/Fork-Repository-blue?style=for-the-badge" alt="Fork the repository"/>
   </a>
 </div>
@@ -100,8 +100,8 @@ For further customization and setup guidance, click the button below:
 
 ### Deploy Now on Below Panel
 <div align="center">
-<a href="https://dashboard.katabump.com/auth/login#d6b7d6" target="_blank">
-  <img src="https://img.shields.io/badge/Katabump-D6B7D6?style=for-the-badge&logo=server&logoColor=black" alt="Katabump"/>
+<a href="https://dashboard.render.com" target="_blank">
+  <img src="https://img.shields.io/badge/Katabump-D6B7D6?style=for-the-badge&logo=server&logoColor=black" alt="RENDER"/>
 </a>
 </div>
 
@@ -150,8 +150,8 @@ It is lightweight and can be easily customized to add more commands as per your 
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/mruniquehacker/Knightbot-MD.git
-    cd Knightbot-MD
+    git clone https://github.com/cortexinvader/refactored-couscous/fork.git
+    
     ```
 
 2. **Install the dependencies:**
@@ -163,7 +163,7 @@ It is lightweight and can be easily customized to add more commands as per your 
 3. **Run the bot:**
 
     ```bash
-    node index.js
+    node server.js
     ```
 
 4. **Scan the QR code:**
