@@ -1,9 +1,9 @@
 const settings = {
-  packname: process.env.BOT_NAME || 'Knight Bot',
+  packname: process.env.BOT_NAME || 'Cortex AI',
   author: '‎',
-  botName: process.env.BOT_NAME || "Knight Bot",
-  botOwner: process.env.BOT_OWNER || 'Professor',
-  ownerNumber: process.env.OWNER_NUMBER || '919876543210',
+  botName: process.env.BOT_NAME || "Cortex AI",
+  botOwner: process.env.BOT_OWNER || 'Suleiman',
+  ownerNumber: process.env.OWNER_NUMBER || '2348088941798',
   giphyApiKey: process.env.GIPHY_API_KEY || 'qnl7ssQChTdPjsKta2Ax2LMaGXz303tq',
   commandMode: "public",
   maxStoreMessages: 20, 
